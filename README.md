@@ -250,3 +250,19 @@ Playwright автоматически поднимает приложение ч
 - Закрытие периода: `/admin/period-locks` (блокирует изменения в закрытом месяце для SUPERVISOR/MANAGER).
 - Политики: лимит ввода задним числом, обязательность причины, контроль отрицательных остатков, количество знаков в UI.
 
+
+
+## Users admin
+
+Раздел `/admin/users` позволяет администратору:
+- создавать пользователей (`SUPERVISOR` / `MANAGER` / `ADMIN`) с временным паролем;
+- менять роль и активность аккаунта;
+- сбрасывать пароль с обязательной сменой при первом входе;
+- завершать все активные сессии пользователя (logout everywhere).
+
+API раздела:
+- `GET /api/admin/users`
+- `POST /api/admin/users`
+- `PATCH /api/admin/users/[id]`
+- `POST /api/admin/users/[id]/reset-password`
+- `POST /api/admin/users/[id]/revoke-sessions`

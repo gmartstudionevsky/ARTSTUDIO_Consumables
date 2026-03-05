@@ -15,7 +15,7 @@ Skeleton monorepo bootstrap for the ARTSTUDIO Consumables web application.
 - `src/components` — reusable UI and layout components
 - `src/lib` — constants, env parsing, shared utilities
 - `src/styles` — global styles and Tailwind entrypoint
-- `public` — static assets placeholders
+- `public` — static assets and PWA files
 - `docs` — documentation area
 
 ## Commands
@@ -32,3 +32,17 @@ Skeleton monorepo bootstrap for the ARTSTUDIO Consumables web application.
 
 - `GET /health` — health status page
 - `GET /api/health` — JSON health endpoint
+
+## PWA
+
+- Manifest: `src/app/manifest.ts`
+- Service worker: `public/sw.js`
+- Icons: `public/icons/icon-192.svg`, `public/icons/icon-512.svg`, `public/favicon.svg`
+- Offline fallback page: `/offline`
+
+Проверка installability:
+
+1. Запустите `npm run dev`.
+2. Откройте DevTools → Application → Manifest и убедитесь, что manifest загружен.
+3. В Application → Service Workers проверьте, что `sw.js` зарегистрирован.
+4. Вкладка Network → Offline, затем откройте `/stock` — должна открыться `/offline`.

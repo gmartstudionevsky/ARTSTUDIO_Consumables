@@ -11,6 +11,7 @@ import {
   Settings,
   User,
   Users,
+  Upload,
   Wrench,
 } from 'lucide-react';
 
@@ -47,6 +48,7 @@ export const adminNavItems: NavItem[] = [
   { href: '/admin', label: { key: 'nav.admin.panel', fallback: 'Админ-панель' }, icon: Shield },
   { href: '/admin/dictionaries', label: { key: 'nav.admin.dictionaries', fallback: 'Справочники' }, icon: Settings },
   { href: '/admin/users', label: { key: 'nav.admin.users', fallback: 'Пользователи' }, icon: Users },
+  { href: '/admin/import', label: { key: 'nav.admin.import', fallback: 'Импорт' }, icon: Upload },
   { href: '/admin/integrations/telegram', label: { key: 'nav.admin.telegram', fallback: 'Telegram' }, icon: Send },
   { href: '/admin/ui-texts', label: { key: 'nav.admin.uiTexts', fallback: 'Тексты интерфейса' }, icon: FileType2 },
 ];

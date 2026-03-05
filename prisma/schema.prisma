@@ -59,6 +59,12 @@ enum NotificationStatus {
   FAILED
 }
 
+enum ImportJobStatus {
+  DRAFT
+  COMMITTED
+  FAILED
+}
+
 model User {
   id                  String    @id @default(uuid()) @db.Uuid
   login               String    @unique
@@ -79,6 +85,7 @@ model User {
   inventoryCreated    InventorySession[] @relation("InventorySessionCreatedBy")
   inventoryApplied    InventorySession[] @relation("InventorySessionAppliedBy")
   auditLogs           AuditLog[]
+  importJobs          ImportJob[]
 }
 
 model Session {
@@ -321,4 +328,17 @@ model NotificationLog {
   channel   TelegramChannel?   @relation(fields: [channelId], references: [id])
 
   @@unique([kind, entityId, channelId])
+}
+
+model ImportJob {
+  id             String          @id @default(uuid()) @db.Uuid
+  createdAt      DateTime        @default(now())
+  createdById    String          @db.Uuid
+  status         ImportJobStatus @default(DRAFT)
+  sourceFilename String
+  payload        Json
+  error          String?
+  createdBy      User            @relation(fields: [createdById], references: [id])
+
+  @@index([createdById, createdAt])
 }

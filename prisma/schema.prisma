@@ -32,6 +32,11 @@ enum InventoryStatus {
   CANCELLED
 }
 
+enum InventoryMode {
+  REGULAR
+  OPENING
+}
+
 enum UiTextScope {
   BOTH
   WEB
@@ -227,6 +232,7 @@ model InventorySession {
   id          String          @id @default(uuid()) @db.Uuid
   occurredAt  DateTime        @db.Date
   status      InventoryStatus @default(DRAFT)
+  mode        InventoryMode   @default(REGULAR)
   createdAt   DateTime        @default(now())
   createdById String          @db.Uuid
   appliedAt   DateTime?

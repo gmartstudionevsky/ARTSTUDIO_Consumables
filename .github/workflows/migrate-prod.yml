@@ -16,7 +16,8 @@ jobs:
       - name: Run Prisma migrations on production
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: npx prisma migrate deploy
+          PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK: "1"
+        run: timeout 10m npx prisma migrate deploy
       - name: Run production-safe seed
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

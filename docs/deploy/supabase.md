@@ -7,20 +7,13 @@
 
 ## 2) Получить `DATABASE_URL`
 1. Перейдите в `Project Settings → Database`.
-2. Найдите блок `Connection string` и выберите URI-формат.
-3. Скопируйте строку и подставьте реальный пароль БД.
-4. Используйте её как `DATABASE_URL` в production env (Vercel).
+2. Найдите `Connection string` для **Transaction Pooler** (IPv4).
+3. Скопируйте URI, подставьте реальный пароль БД.
+4. Используйте её как единый `DATABASE_URL` и в runtime, и в GitHub Actions миграциях.
 
-Пример:
+Пример (рекомендуется для GitHub Actions / Supabase Free):
 ```env
-DATABASE_URL=postgresql://postgres:<PASSWORD>@db.<project-ref>.supabase.co:5432/postgres?sslmode=require
-```
-
-## 2.1) URL для GitHub Actions (миграции через pooler)
-Для GitHub Actions (особенно на Supabase Free) используйте отдельный секрет `MIGRATE_DATABASE_URL` с Transaction Pooler (IPv4):
-
-```env
-MIGRATE_DATABASE_URL=postgresql://postgres.<project-ref>:<PASSWORD>@aws-0-<region>.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true&connection_limit=1
+DATABASE_URL=postgresql://postgres.<project-ref>:<PASSWORD>@aws-0-<region>.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true&connection_limit=1
 ```
 
 - Порт `6543` — pooler (IPv4), обычно доступен из GitHub Actions.

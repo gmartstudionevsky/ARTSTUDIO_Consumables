@@ -33,7 +33,10 @@ export function UsersCards({
         <Card key={item.id}>
           <CardContent className="space-y-3">
             <div className="flex items-start justify-between gap-2">
-              <p className="font-medium text-text">{item.login}</p>
+              <div className="space-y-1">
+                <p className="font-medium text-text">{item.login}</p>
+                {item.hasLegacyPassword ? <Badge variant="warn">Legacy hash</Badge> : null}
+              </div>
               <Badge variant={item.isActive ? 'ok' : 'neutral'}>{item.isActive ? 'Активен' : 'Отключён'}</Badge>
             </div>
             <p className="text-sm text-muted">Роль: {roleLabel(item.role)}</p>

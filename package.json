@@ -25,11 +25,11 @@
     "prisma:generate": "prisma generate",
     "seed:admin": "tsx prisma/seed.ts admin",
     "seed:defaults": "tsx prisma/seed.ts defaults",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "migrate:legacy-passwords": "tsx scripts/migrate-argon2-to-scrypt.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
-    "argon2": "^0.44.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "exceljs": "^4.4.0",

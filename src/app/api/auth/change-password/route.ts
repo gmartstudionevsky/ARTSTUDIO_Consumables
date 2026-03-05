@@ -23,9 +23,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: `Пароль должен быть не короче ${MIN_PASSWORD_LENGTH} символов` }, { status: 400 });
   }
 
-  const isCurrentPasswordValid = await verifyPassword(session.user.passwordHash, body.currentPassword);
+  const verification = await verifyPassword(body.currentPassword, session.user.passwordHash);
 
-  if (!isCurrentPasswordValid) {
+  if (verification.legacy) {
+    return NextResponse.json(
+      { error: 'Этот пароль сохранён в старом формате. Нужен сброс пароля администратором.', code: 'PASSWORD_LEGACY' },
+      { status: 428 },
+    );
+  }
+
+  if (!verification.ok) {
     return NextResponse.json({ error: 'Неверный текущий пароль' }, { status: 401 });
   }
 

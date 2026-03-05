@@ -13,6 +13,7 @@ export type AdminUserListItem = {
   lastLoginAt: string | null;
   createdBy: { id: string; login: string } | null;
   sessionsActive: number;
+  hasLegacyPassword: boolean;
 };
 
 function roleLabel(role: Role): string {
@@ -58,7 +59,12 @@ export function UsersTable({
 
             return (
               <tr key={item.id} className="border-t border-border">
-                <td className="px-4 py-3">{item.login}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span>{item.login}</span>
+                    {item.hasLegacyPassword ? <Badge variant="warn">Legacy hash</Badge> : null}
+                  </div>
+                </td>
                 <td className="px-4 py-3">{roleLabel(item.role)}</td>
                 <td className="px-4 py-3">
                   <Badge variant={item.isActive ? 'ok' : 'neutral'}>{item.isActive ? 'Активен' : 'Отключён'}</Badge>

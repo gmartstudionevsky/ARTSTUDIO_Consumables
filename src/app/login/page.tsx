@@ -25,10 +25,14 @@ export default function LoginPage(): JSX.Element {
       body: JSON.stringify({ login, password }),
     });
 
-    const data = (await response.json()) as { error?: string; ok?: boolean; mustChangePassword?: boolean };
+    const data = (await response.json()) as { error?: string; code?: string; ok?: boolean; mustChangePassword?: boolean };
 
     if (!response.ok || !data.ok) {
-      setError(data.error ?? 'Не удалось войти. Проверьте логин и пароль.');
+      if (data.code === 'PASSWORD_LEGACY') {
+        setError('Пароль сохранён в старом формате. Попросите администратора сбросить пароль.');
+      } else {
+        setError(data.error ?? 'Не удалось войти. Проверьте логин и пароль.');
+      }
       setLoading(false);
       return;
     }

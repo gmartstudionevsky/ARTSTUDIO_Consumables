@@ -1,5 +1,6 @@
-import argon2 from 'argon2';
 import { PrismaClient, Role, SettingKey, UiTextScope } from '@prisma/client';
+
+import { hashPassword } from '../src/lib/auth/password';
 
 const prisma = new PrismaClient();
 
@@ -43,7 +44,7 @@ export async function seedAdmin(): Promise<void> {
     return;
   }
 
-  const passwordHash = await argon2.hash(password);
+  const passwordHash = await hashPassword(password);
 
   await prisma.user.create({
     data: {

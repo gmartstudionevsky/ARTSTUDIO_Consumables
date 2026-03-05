@@ -17,9 +17,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'Неверный логин или пароль' }, { status: 401 });
   }
 
-  const isValidPassword = await verifyPassword(user.passwordHash, body.password);
+  const verification = await verifyPassword(body.password, user.passwordHash);
 
-  if (!isValidPassword) {
+  if (verification.legacy) {
+    return NextResponse.json(
+      { error: 'Этот пароль сохранён в старом формате. Нужен сброс пароля администратором.', code: 'PASSWORD_LEGACY' },
+      { status: 428 },
+    );
+  }
+
+  if (!verification.ok) {
     return NextResponse.json({ error: 'Неверный логин или пароль' }, { status: 401 });
   }
 

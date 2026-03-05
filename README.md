@@ -32,6 +32,21 @@ npm run dev
 - `NEXT_PUBLIC_ENABLE_DEBUG` — включение debug-флагов (`true/false`).
 - `SEED_ADMIN_PASSWORD` — пароль для разового создания admin.
 
+
+## Пароли: scrypt и legacy argon2
+
+- Новые пароли сохраняются в формате `scrypt$N$r$p$saltB64$hashB64` на базе встроенного `crypto.scrypt` (без нативных зависимостей).
+- Старые хеши вида `$argon2...` считаются legacy: вход с ними возвращает `code: PASSWORD_LEGACY` и требует сброса пароля администратором.
+- После сброса/смены пароля хеш автоматически становится `scrypt`, вход в Vercel работает без `argon2`.
+
+Проверка legacy-пользователей и принудительный `forcePasswordChange`:
+
+```bash
+npm run migrate:legacy-passwords
+```
+
+Скрипт выведет список логинов, которым нужен админский reset password.
+
 ## Production deploy: Vercel + Supabase
 
 Подробные инструкции:

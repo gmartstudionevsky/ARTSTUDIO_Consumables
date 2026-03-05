@@ -60,6 +60,7 @@ export type AdminUsersListItem = {
   lastLoginAt: Date | null;
   createdBy: { id: string; login: string } | null;
   sessionsActive: number;
+  hasLegacyPassword: boolean;
 };
 
 export function generateTempPassword(minLength = 12, maxLength = 16): string {
@@ -104,6 +105,7 @@ export async function listAdminUsers(query: UsersListQuery): Promise<{ items: Ad
         createdAt: true,
         lastLoginAt: true,
         createdBy: { select: { id: true, login: true } },
+        passwordHash: true,
       },
     }),
     prisma.user.count({ where }),
@@ -126,8 +128,16 @@ export async function listAdminUsers(query: UsersListQuery): Promise<{ items: Ad
 
   return {
     items: rows.map((row) => ({
-      ...row,
+      id: row.id,
+      login: row.login,
+      role: row.role,
+      isActive: row.isActive,
+      forcePasswordChange: row.forcePasswordChange,
+      createdAt: row.createdAt,
+      lastLoginAt: row.lastLoginAt,
+      createdBy: row.createdBy,
       sessionsActive: sessionsMap.get(row.id) ?? 0,
+      hasLegacyPassword: row.passwordHash.startsWith('$argon2') || row.passwordHash.startsWith('argon2$'),
     })),
     total,
   };

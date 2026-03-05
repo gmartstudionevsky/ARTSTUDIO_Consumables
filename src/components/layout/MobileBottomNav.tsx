@@ -1,0 +1,37 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+import { mainNavItems } from '@/lib/navigation';
+import { cn } from '@/lib/utils';
+
+export function MobileBottomNav(): JSX.Element {
+  const pathname = usePathname();
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 bg-white px-2 py-2 md:hidden">
+      <ul className="grid grid-cols-5 gap-1">
+        {mainNavItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href;
+
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  'flex flex-col items-center gap-1 rounded-md px-2 py-1 text-[11px] leading-none',
+                  isActive ? 'text-slate-950' : 'text-slate-500'
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}

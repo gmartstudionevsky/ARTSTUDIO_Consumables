@@ -23,7 +23,7 @@ export function TransactionLinesTable({ lines, onCancel, onCorrect, decimals }: 
           {lines.map((line) => (
             <tr key={line.id} className={`border-t border-border align-top ${line.status === 'CANCELLED' ? 'bg-surface/60 text-muted' : ''}`}>
               <td className="px-4 py-3">
-                <Link className="text-accent underline" href={`/items/${line.item.id}`}>{line.item.code} — {line.item.name}</Link>
+                <Link className="text-accent underline" href={`/items/${line.item.id}`}>{line.item.name}</Link>
                 {line.correctedFromLineId ? <p className="text-xs text-muted">Исправлено из <span className="font-medium">{line.correctedFromLineId}</span></p> : null}
               </td>
               <td className="px-4 py-3">{formatQty(line.qtyInput, decimals)} {line.unit.name}</td>

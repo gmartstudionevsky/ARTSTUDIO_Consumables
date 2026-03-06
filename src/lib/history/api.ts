@@ -16,12 +16,13 @@ export async function fetchHistoryDetail(id: string): Promise<HistoryTransaction
   return httpGet<HistoryTransactionDetail>(`/api/transactions/${id}`);
 }
 
-export async function fetchLookup(type: 'expense-articles' | 'purposes' | 'reasons'): Promise<RefOption[]> {
+export async function fetchLookup(type: 'expense-articles' | 'categories' | 'purposes' | 'reasons'): Promise<RefOption[]> {
   const cached = lookupCache.get(type);
   if (cached) return cached;
-  const payload = await httpGet<{ items: RefOption[] }>(`/api/lookup/${type}?active=true`);
-  lookupCache.set(type, payload.items);
-  return payload.items;
+  const payload = await httpGet<{ items: Array<{ id: string; code?: string; name: string }> }>(`/api/lookup/${type}?active=true`);
+  const items = payload.items.map((item) => ({ ...item, code: item.code ?? item.name }));
+  lookupCache.set(type, items);
+  return items;
 }
 
 export async function searchItems(q: string): Promise<Array<{ id: string; code: string; name: string }>> {

@@ -11,7 +11,7 @@ export function ItemCards({ items, canManage, onToggle }: { items: CatalogItem[]
       {items.map((item) => (
         <Card key={item.id}>
           <CardContent className="space-y-2 p-4 text-sm">
-            <p className="font-semibold">{item.code} · {item.name}</p>
+            <p className="font-semibold">{canManage ? `${item.code} · ${item.name}` : item.name}</p>
             <p>{item.category.name}</p>
             <p>{item.defaultExpenseArticle.code} — {item.defaultExpenseArticle.name}</p>
             <p>{item.defaultPurpose.code} — {item.defaultPurpose.name}</p>

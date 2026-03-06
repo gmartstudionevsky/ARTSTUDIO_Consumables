@@ -21,7 +21,7 @@ export function StockCards({ items, decimals }: { items: StockListItem[]; decima
             <CardContent>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-medium">{item.code} · {item.name}</p>
+                  <p className="font-medium">{item.name}</p>
                   <p className="text-xs text-muted">{item.category.name}</p>
                 </div>
                 <Badge variant={badge.variant}>{badge.label}</Badge>

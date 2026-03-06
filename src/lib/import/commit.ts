@@ -2,6 +2,39 @@ import { ImportJobStatus, Prisma, RecordStatus, TxType } from '@prisma/client';
 
 import { prisma } from '@/lib/db/prisma';
 import { CommitOptions, NormalizedImportPayload } from '@/lib/import/types';
+import { generateNextItemCode } from '@/lib/items/codeGen';
+
+type RollbackItemSnapshot = {
+  itemId: string;
+  before: {
+    code: string;
+    name: string;
+    categoryId: string;
+    defaultExpenseArticleId: string;
+    defaultPurposeId: string;
+    minQtyBase: string | null;
+    isActive: boolean;
+    synonyms: string | null;
+    note: string | null;
+    baseUnitId: string;
+    defaultInputUnitId: string;
+    reportUnitId: string;
+  };
+  units: Array<{
+    unitId: string;
+    factorToBase: string;
+    isAllowed: boolean;
+    isDefaultInput: boolean;
+    isDefaultReport: boolean;
+  }>;
+};
+
+type RollbackMeta = {
+  createdItemIds: string[];
+  updatedItems: RollbackItemSnapshot[];
+  openingTransactionId: string | null;
+  rolledBackAt?: string;
+};
 
 function toDecimal(value: number): Prisma.Decimal {
   return new Prisma.Decimal(value.toFixed(6));
@@ -102,41 +135,122 @@ export async function commitImportJob(params: {
         unitRowsByCode.set(row.itemCode, list);
       }
 
+      const rollback: RollbackMeta = {
+        createdItemIds: [],
+        updatedItems: [],
+        openingTransactionId: null,
+      };
+
       const openingLinePayload: Array<{ itemId: string; qtyInput: Prisma.Decimal; unitId: string; qtyBase: Prisma.Decimal; expenseArticleId: string; purposeId: string }> = [];
 
       for (const row of payload.rows.directory) {
-        const existingItem = await tx.item.findUnique({ where: { code: row.code }, select: { id: true } });
-        const item = await tx.item.upsert({
-          where: { code: row.code },
-          update: {
-            name: row.name,
-            categoryId: categoryMap.get(row.category) as string,
-            defaultExpenseArticleId: expenseMap.get(row.purposeCode) as string,
-            defaultPurposeId: purposeMap.get(row.purposeCode) as string,
-            minQtyBase: row.minQtyBase === null ? null : toDecimal(row.minQtyBase),
-            isActive: row.isActive,
-            synonyms: row.synonyms,
-            note: row.note,
-            baseUnitId: unitMap.get(row.baseUnit) as string,
-            defaultInputUnitId: unitMap.get(row.defaultInputUnit) as string,
-            reportUnitId: unitMap.get(row.reportUnit) as string,
+        const categoryId = categoryMap.get(row.category) as string;
+        const existingItem = await tx.item.findFirst({
+          where: {
+            OR: [
+              { code: row.code },
+              { name: row.name, categoryId },
+            ],
           },
-          create: {
-            code: row.code,
-            name: row.name,
-            categoryId: categoryMap.get(row.category) as string,
-            defaultExpenseArticleId: expenseMap.get(row.purposeCode) as string,
-            defaultPurposeId: purposeMap.get(row.purposeCode) as string,
-            minQtyBase: row.minQtyBase === null ? null : toDecimal(row.minQtyBase),
-            isActive: row.isActive,
-            synonyms: row.synonyms,
-            note: row.note,
-            baseUnitId: unitMap.get(row.baseUnit) as string,
-            defaultInputUnitId: unitMap.get(row.defaultInputUnit) as string,
-            reportUnitId: unitMap.get(row.reportUnit) as string,
-          },
+          select: { id: true },
         });
-        if (!existingItem) created.items += 1;
+
+        if (existingItem) {
+          const snapshotItem = await tx.item.findUnique({
+            where: { id: existingItem.id },
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              categoryId: true,
+              defaultExpenseArticleId: true,
+              defaultPurposeId: true,
+              minQtyBase: true,
+              isActive: true,
+              synonyms: true,
+              note: true,
+              baseUnitId: true,
+              defaultInputUnitId: true,
+              reportUnitId: true,
+            },
+          });
+          const snapshotUnits = await tx.itemUnit.findMany({
+            where: { itemId: existingItem.id },
+            select: {
+              unitId: true,
+              factorToBase: true,
+              isAllowed: true,
+              isDefaultInput: true,
+              isDefaultReport: true,
+            },
+          });
+
+          if (snapshotItem) {
+            rollback.updatedItems.push({
+              itemId: snapshotItem.id,
+              before: {
+                code: snapshotItem.code,
+                name: snapshotItem.name,
+                categoryId: snapshotItem.categoryId,
+                defaultExpenseArticleId: snapshotItem.defaultExpenseArticleId,
+                defaultPurposeId: snapshotItem.defaultPurposeId,
+                minQtyBase: snapshotItem.minQtyBase?.toString() ?? null,
+                isActive: snapshotItem.isActive,
+                synonyms: snapshotItem.synonyms,
+                note: snapshotItem.note,
+                baseUnitId: snapshotItem.baseUnitId,
+                defaultInputUnitId: snapshotItem.defaultInputUnitId,
+                reportUnitId: snapshotItem.reportUnitId,
+              },
+              units: snapshotUnits.map((unit) => ({
+                unitId: unit.unitId,
+                factorToBase: unit.factorToBase.toString(),
+                isAllowed: unit.isAllowed,
+                isDefaultInput: unit.isDefaultInput,
+                isDefaultReport: unit.isDefaultReport,
+              })),
+            });
+          }
+        }
+
+        const item = existingItem
+          ? await tx.item.update({
+            where: { id: existingItem.id },
+            data: {
+              name: row.name,
+              categoryId,
+              defaultExpenseArticleId: expenseMap.get(row.purposeCode) as string,
+              defaultPurposeId: purposeMap.get(row.purposeCode) as string,
+              minQtyBase: row.minQtyBase === null ? null : toDecimal(row.minQtyBase),
+              isActive: row.isActive,
+              synonyms: row.synonyms,
+              note: row.note,
+              baseUnitId: unitMap.get(row.baseUnit) as string,
+              defaultInputUnitId: unitMap.get(row.defaultInputUnit) as string,
+              reportUnitId: unitMap.get(row.reportUnit) as string,
+            },
+          })
+          : await tx.item.create({
+            data: {
+              code: await generateNextItemCode(tx),
+              name: row.name,
+              categoryId,
+              defaultExpenseArticleId: expenseMap.get(row.purposeCode) as string,
+              defaultPurposeId: purposeMap.get(row.purposeCode) as string,
+              minQtyBase: row.minQtyBase === null ? null : toDecimal(row.minQtyBase),
+              isActive: row.isActive,
+              synonyms: row.synonyms,
+              note: row.note,
+              baseUnitId: unitMap.get(row.baseUnit) as string,
+              defaultInputUnitId: unitMap.get(row.defaultInputUnit) as string,
+              reportUnitId: unitMap.get(row.reportUnit) as string,
+            },
+          });
+
+        if (!existingItem) {
+          created.items += 1;
+          rollback.createdItemIds.push(item.id);
+        }
 
         const customUnits = unitRowsByCode.get(row.code) ?? [];
         const rowsToCreate = customUnits.length > 0
@@ -201,7 +315,7 @@ export async function commitImportJob(params: {
             batchId: openingBatchId(),
             type: TxType.IN,
             occurredAt: new Date('2026-03-01T00:00:00.000Z'),
-            note: 'Открытие склада 01.03.2026 (Import)',
+            note: `Открытие склада 01.03.2026 (Import #${params.jobId})`,
             createdById: params.userId,
             status: RecordStatus.ACTIVE,
           },
@@ -212,9 +326,20 @@ export async function commitImportJob(params: {
         });
         created.openingLines = openingLinePayload.length;
         openingCreated = true;
+        rollback.openingTransactionId = txOpening.id;
       }
 
-      await tx.importJob.update({ where: { id: params.jobId }, data: { status: ImportJobStatus.COMMITTED, error: null } });
+      await tx.importJob.update({
+        where: { id: params.jobId },
+        data: {
+          status: ImportJobStatus.COMMITTED,
+          error: null,
+          payload: {
+            ...(payload as unknown as Record<string, unknown>),
+            rollback,
+          },
+        },
+      });
 
       return { openingCreated };
     }, {
@@ -227,4 +352,85 @@ export async function commitImportJob(params: {
     await prisma.importJob.update({ where: { id: params.jobId }, data: { status: ImportJobStatus.FAILED, error: error instanceof Error ? error.message : 'Ошибка импорта' } });
     throw error;
   }
+}
+
+export async function rollbackImportJob(params: { jobId: string; userId: string }): Promise<{ rolledBack: boolean }> {
+  const job = await prisma.importJob.findFirst({ where: { id: params.jobId, createdById: params.userId, status: ImportJobStatus.COMMITTED } });
+  if (!job) throw new Error('Коммит импорта не найден.');
+
+  const payload = job.payload as unknown as (NormalizedImportPayload & { rollback?: RollbackMeta });
+  const rollback = payload.rollback;
+  if (!rollback) {
+    throw new Error('Для этого импорта откат недоступен. Выполните новый импорт, чтобы включить rollback-метаданные.');
+  }
+  if (rollback.rolledBackAt) {
+    throw new Error('Этот импорт уже был откачен.');
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (rollback.openingTransactionId) {
+      await tx.transactionLine.deleteMany({ where: { transactionId: rollback.openingTransactionId } });
+      await tx.transaction.deleteMany({ where: { id: rollback.openingTransactionId } });
+    }
+
+    for (const itemId of rollback.createdItemIds) {
+      const linesCount = await tx.transactionLine.count({ where: { itemId } });
+      if (linesCount > 0) {
+        throw new Error('Нельзя откатить импорт: по новым позициям уже есть движения.');
+      }
+      await tx.itemUnit.deleteMany({ where: { itemId } });
+      await tx.item.deleteMany({ where: { id: itemId } });
+    }
+
+    for (const item of rollback.updatedItems) {
+      await tx.item.update({
+        where: { id: item.itemId },
+        data: {
+          code: item.before.code,
+          name: item.before.name,
+          categoryId: item.before.categoryId,
+          defaultExpenseArticleId: item.before.defaultExpenseArticleId,
+          defaultPurposeId: item.before.defaultPurposeId,
+          minQtyBase: item.before.minQtyBase === null ? null : new Prisma.Decimal(item.before.minQtyBase),
+          isActive: item.before.isActive,
+          synonyms: item.before.synonyms,
+          note: item.before.note,
+          baseUnitId: item.before.baseUnitId,
+          defaultInputUnitId: item.before.defaultInputUnitId,
+          reportUnitId: item.before.reportUnitId,
+        },
+      });
+      await tx.itemUnit.deleteMany({ where: { itemId: item.itemId } });
+      if (item.units.length > 0) {
+        await tx.itemUnit.createMany({
+          data: item.units.map((unit) => ({
+            itemId: item.itemId,
+            unitId: unit.unitId,
+            factorToBase: new Prisma.Decimal(unit.factorToBase),
+            isAllowed: unit.isAllowed,
+            isDefaultInput: unit.isDefaultInput,
+            isDefaultReport: unit.isDefaultReport,
+          })),
+        });
+      }
+    }
+
+    await tx.importJob.update({
+      where: { id: params.jobId },
+      data: {
+        payload: {
+          ...(payload as unknown as Record<string, unknown>),
+          rollback: {
+            ...rollback,
+            rolledBackAt: new Date().toISOString(),
+          },
+        },
+      },
+    });
+  }, {
+    maxWait: 10_000,
+    timeout: 120_000,
+  });
+
+  return { rolledBack: true };
 }

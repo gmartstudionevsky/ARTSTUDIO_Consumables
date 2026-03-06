@@ -29,7 +29,7 @@ export function StockTable({ items, decimals }: { items: StockListItem[]; decima
             const badge = statusBadge(item.status);
             return (
               <tr key={item.itemId} className="border-t border-border" data-testid={`stock-item-${item.itemId}`}>
-                <td className="px-4 py-3">{item.code} · {item.name}</td>
+                <td className="px-4 py-3">{item.name}</td>
                 <td className="px-4 py-3">{item.category.name}</td>
                 <td className="px-4 py-3 font-medium" data-testid={`stock-qty-${item.itemId}`}>{formatQty(item.qtyReport, decimals)}</td>
                 <td className="px-4 py-3">{item.reportUnit.name}</td>

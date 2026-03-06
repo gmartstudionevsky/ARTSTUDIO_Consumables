@@ -13,10 +13,10 @@ interface HistoryFiltersState {
   q: string;
   itemId: string;
   expenseArticleId: string;
-  purposeId: string;
+  categoryId: string;
 }
 
-export function HistoryFilters({ value, onChange, onPreset, items, expenseArticles, purposes }: { value: HistoryFiltersState; onChange: (patch: Partial<HistoryFiltersState>) => void; onPreset: (days: number) => void; items: Array<{ id: string; code: string; name: string }>; expenseArticles: RefOption[]; purposes: RefOption[] }): JSX.Element {
+export function HistoryFilters({ value, onChange, onPreset, items, expenseArticles, categories }: { value: HistoryFiltersState; onChange: (patch: Partial<HistoryFiltersState>) => void; onPreset: (days: number) => void; items: Array<{ id: string; code: string; name: string }>; expenseArticles: RefOption[]; categories: RefOption[] }): JSX.Element {
   return (
     <div className="space-y-3 rounded-lg border border-border p-4">
       <div className="grid gap-3 md:grid-cols-5">
@@ -47,15 +47,15 @@ export function HistoryFilters({ value, onChange, onPreset, items, expenseArticl
         <div className="mt-3 grid gap-3 md:grid-cols-3">
           <Select label="Позиция" value={value.itemId} onChange={(event) => onChange({ itemId: event.target.value })}>
             <option value="">Все</option>
-            {items.map((item) => <option key={item.id} value={item.id}>{item.code} — {item.name}</option>)}
+            {items.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </Select>
           <Select label="Статья" value={value.expenseArticleId} onChange={(event) => onChange({ expenseArticleId: event.target.value })}>
             <option value="">Все</option>
             {expenseArticles.map((item) => <option key={item.id} value={item.id}>{item.code} — {item.name}</option>)}
           </Select>
-          <Select label="Назначение" value={value.purposeId} onChange={(event) => onChange({ purposeId: event.target.value })}>
+          <Select label="Раздел" value={value.categoryId} onChange={(event) => onChange({ categoryId: event.target.value })}>
             <option value="">Все</option>
-            {purposes.map((item) => <option key={item.id} value={item.id}>{item.code} — {item.name}</option>)}
+            {categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </Select>
         </div>
       </details>

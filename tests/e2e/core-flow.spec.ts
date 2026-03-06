@@ -1,10 +1,14 @@
 import { expect, test } from '@playwright/test';
 
-import { setupTestData, type TestData } from './setupTestData';
+import { ensureAdminCredentials, setupTestData, type TestData } from './setupTestData';
 
 let testData: TestData;
 
 test.beforeAll(async () => {
+  const adminLogin = process.env.E2E_ADMIN_LOGIN ?? 'admin';
+  const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? 'ChangeMe123!';
+
+  await ensureAdminCredentials(adminLogin, adminPassword);
   testData = await setupTestData();
 });
 

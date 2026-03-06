@@ -39,3 +39,9 @@ export interface ItemPageData {
   stock: StockItemSnapshot;
   movements: ItemMovement[];
 }
+
+
+export interface CreateItemResponse {
+  item: { id: string };
+  transactionId?: string;
+}

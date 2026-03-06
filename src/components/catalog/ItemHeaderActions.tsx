@@ -7,7 +7,7 @@ export function ItemHeaderActions({ canManage, onOpenCreate }: { canManage: bool
   return (
     <div className="flex gap-2">
       <Link href="/operation" className="inline-flex min-h-10 items-center text-sm text-accent underline">Добавить позицию из операции</Link>
-      {canManage ? <Button onClick={onOpenCreate}>Добавить позицию</Button> : null}
+      {canManage ? <Button data-testid="catalog-add-item" onClick={onOpenCreate}>Добавить позицию</Button> : null}
     </div>
   );
 }

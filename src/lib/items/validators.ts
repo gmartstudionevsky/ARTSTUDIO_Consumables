@@ -5,6 +5,16 @@ const optionalText = z.string().trim().optional().transform((value) => {
   return value;
 });
 
+const nullableOptionalText = z.string().trim().nullable().optional().transform((value) => {
+  if (!value) return undefined;
+  return value;
+});
+
+const optionalNumberInput = z.union([z.string(), z.number()]).optional().transform((value) => {
+  if (value === undefined || value === null || value === '') return undefined;
+  return Number(value);
+});
+
 export const listItemsQuerySchema = z.object({
   q: z.string().optional(),
   categoryId: z.string().uuid().optional(),
@@ -28,6 +38,21 @@ export const createItemSchema = z.object({
   synonyms: optionalText,
   note: optionalText,
   isActive: z.boolean().optional().default(true),
+  initialStock: z.object({
+    enabled: z.boolean(),
+    qty: optionalNumberInput,
+    unitId: z.string().uuid().optional(),
+    occurredAt: nullableOptionalText,
+    comment: nullableOptionalText,
+  }).optional(),
+}).superRefine((data, ctx) => {
+  if (!data.initialStock?.enabled) return;
+  if (!data.initialStock.unitId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['initialStock', 'unitId'], message: 'Укажите единицу для первичного прихода' });
+  }
+  if (!data.initialStock.qty || Number.isNaN(data.initialStock.qty) || data.initialStock.qty <= 0) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['initialStock', 'qty'], message: 'Количество первичного прихода должно быть больше нуля' });
+  }
 });
 
 export const patchItemSchema = z.object({

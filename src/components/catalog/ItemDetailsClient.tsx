@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 
 import { ItemUnitsEditor } from '@/components/catalog/ItemUnitsEditor';
 import { ItemUnitRow, RefOption } from '@/components/catalog/types';
@@ -39,6 +39,7 @@ type ItemPayload = {
 export function ItemDetailsClient(): JSX.Element {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [data, setData] = useState<ItemPayload | null>(null);
   const [units, setUnits] = useState<ItemUnitRow[]>([]);
   const [toast, setToast] = useState('');
@@ -77,6 +78,10 @@ export function ItemDetailsClient(): JSX.Element {
     <section className="space-y-4">
       <Link href="/catalog" className="text-sm text-accent underline">← Назад</Link>
       <div className="flex items-center gap-2"><h1 className="text-2xl font-semibold">{itemData.item.code} · {itemData.item.name}</h1><Badge variant={itemData.item.isActive ? 'ok' : 'neutral'}>{itemData.item.isActive ? 'Активна' : 'Архив'}</Badge></div>
+      {searchParams.get('transactionId') ? (
+        <p className="text-sm"><Link href={`/history/${searchParams.get('transactionId')}`} className="text-accent underline">Открыть историю прихода</Link></p>
+      ) : null}
+
       <div className="grid gap-3 md:grid-cols-2">
         <Input label="Название" value={itemData.item.name} onChange={(e) => setData((prev) => prev ? { ...prev, item: { ...prev.item, name: e.target.value } } : prev)} />
         <Select label="Раздел" value={itemData.item.categoryId} onChange={(e) => setData((prev) => prev ? { ...prev, item: { ...prev.item, categoryId: e.target.value } } : prev)}>{itemData.refs.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select>

@@ -51,7 +51,19 @@ export function CatalogPageClient({ categories, expenseArticles, purposes, units
       {items.length > 0 ? <ItemsTable items={items} canManage={canManage} onToggle={toggle} /> : null}
       {items.length > 0 ? <ItemCards items={items} canManage={canManage} onToggle={toggle} /> : null}
 
-      <ItemFormModal open={open} categories={categories} expenseArticles={expenseArticles} purposes={purposes} units={units} onClose={() => setOpen(false)} onCreated={(id, note) => { setOpen(false); setToast(note ? `Позиция создана. ${note} Приход будет доступен в следующем модуле операций.` : 'Позиция создана'); router.push(`/catalog/${id}`); }} />
+      <ItemFormModal
+        open={open}
+        categories={categories}
+        expenseArticles={expenseArticles}
+        purposes={purposes}
+        units={units}
+        onClose={() => setOpen(false)}
+        onCreated={({ id, initialStockNote, transactionId }) => {
+          setOpen(false);
+          setToast(initialStockNote ? `Позиция создана. ${initialStockNote}` : 'Позиция создана');
+          router.push(transactionId ? `/catalog/${id}?transactionId=${transactionId}` : `/catalog/${id}`);
+        }}
+      />
       {toast ? <Toast message={toast} onClose={() => setToast('')} /> : null}
     </section>
   );

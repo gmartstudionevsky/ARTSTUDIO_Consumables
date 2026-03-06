@@ -57,6 +57,21 @@ export async function commitImportJob(params: {
   const payload = job.payload as unknown as NormalizedImportPayload;
   if (payload.errors.length > 0) throw new Error('Импорт содержит ошибки. Исправьте файл и повторите предпросмотр.');
 
+
+  const decisionsMap = new Map<number, { action: 'AUTO' | 'CREATE' | 'SKIP'; itemId?: string }>();
+  for (const row of payload.syncPlan?.rows ?? []) {
+    if (row.status === 'MATCHED' && row.selectedItemId) {
+      decisionsMap.set(row.rowNumber, { action: 'AUTO', itemId: row.selectedItemId });
+    }
+    if (row.status === 'SKIP') {
+      decisionsMap.set(row.rowNumber, { action: 'SKIP' });
+    }
+  }
+  for (const decision of params.options?.decisions ?? []) {
+    decisionsMap.set(decision.rowNumber, { action: decision.action, itemId: decision.itemId });
+  }
+  const unresolvedBehavior = params.options?.unresolvedBehavior ?? 'CREATE';
+
   const created = {
     categories: 0,
     units: 0,
@@ -65,6 +80,10 @@ export async function commitImportJob(params: {
     items: 0,
     itemUnits: 0,
     openingLines: 0,
+    syncMatched: 0,
+    syncCreated: 0,
+    syncSkipped: 0,
+    syncNeedsReview: 0,
   };
 
   try {
@@ -145,15 +164,51 @@ export async function commitImportJob(params: {
 
       for (const row of payload.rows.directory) {
         const categoryId = categoryMap.get(row.category) as string;
-        const existingItem = await tx.item.findFirst({
-          where: {
-            OR: [
-              { code: row.code },
-              { name: row.name, categoryId },
-            ],
-          },
-          select: { id: true },
-        });
+        const decision = decisionsMap.get(row.rowNumber);
+
+        let targetItemId: string | null = decision?.itemId ?? null;
+        if (!targetItemId && decision?.action === 'AUTO') {
+          const planned = payload.syncPlan?.rows?.find((planRow) => planRow.rowNumber === row.rowNumber);
+          targetItemId = planned?.selectedItemId ?? null;
+        }
+
+        let action = decision?.action;
+        if (!action) {
+          const planned = payload.syncPlan?.rows?.find((planRow) => planRow.rowNumber === row.rowNumber);
+          if (planned?.status === 'MATCHED' && planned.selectedItemId) {
+            action = 'AUTO';
+            targetItemId = planned.selectedItemId;
+          } else if (planned?.status === 'NEEDS_REVIEW') {
+            action = unresolvedBehavior === 'SKIP' ? 'SKIP' : 'CREATE';
+            created.syncNeedsReview += 1;
+          } else {
+            action = 'CREATE';
+          }
+        }
+
+        if (action === 'SKIP') {
+          created.syncSkipped += 1;
+          continue;
+        }
+
+        const existingItem = targetItemId
+          ? await tx.item.findUnique({ where: { id: targetItemId }, select: { id: true } })
+          : await tx.item.findFirst({
+            where: {
+              OR: [
+                { code: row.code },
+                { name: row.name, categoryId },
+              ],
+            },
+            select: { id: true },
+          });
+
+        if (existingItem && action === 'AUTO') {
+          created.syncMatched += 1;
+        }
+        if (!existingItem || action === 'CREATE') {
+          created.syncCreated += 1;
+        }
 
         if (existingItem) {
           const snapshotItem = await tx.item.findUnique({

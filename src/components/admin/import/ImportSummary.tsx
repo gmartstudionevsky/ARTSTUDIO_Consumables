@@ -11,6 +11,10 @@ export function ImportSummary({ summary }: { summary: Summary }): JSX.Element {
     ['Назначения', summary.purposes],
     ['Строки единиц', summary.itemUnits],
     ['OPENING строки', summary.openingLines],
+    ['Синх. сопоставлено', summary.syncMatched],
+    ['Синх. создано', summary.syncCreated],
+    ['Синх. пропущено', summary.syncSkipped],
+    ['Требуют решения', summary.syncNeedsReview],
   ];
 
   return (

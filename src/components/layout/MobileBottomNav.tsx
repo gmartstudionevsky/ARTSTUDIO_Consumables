@@ -42,7 +42,17 @@ export function MobileBottomNav(): JSX.Element {
   const secondaryItems = mobileNavItems.slice(PRIMARY_NAV_COUNT);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border/80 bg-surface/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur supports-[backdrop-filter]:bg-surface/85 md:hidden">
+    <>
+      {isMoreOpen ? (
+        <button
+          type="button"
+          aria-label="Закрыть меню"
+          onClick={() => setIsMoreOpen(false)}
+          className="fixed inset-0 z-20 bg-black/25"
+        />
+      ) : null}
+
+      <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border/80 bg-surface/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur supports-[backdrop-filter]:bg-surface/85 md:hidden">
       {isMoreOpen && secondaryItems.length > 0 ? (
         <div
           id="mobile-more-menu"
@@ -89,7 +99,8 @@ export function MobileBottomNav(): JSX.Element {
           </button>
         </li>
       </ul>
-    </nav>
+      </nav>
+    </>
   );
 }
 

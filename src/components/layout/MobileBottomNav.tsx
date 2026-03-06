@@ -42,17 +42,20 @@ export function MobileBottomNav(): JSX.Element {
   const secondaryItems = mobileNavItems.slice(PRIMARY_NAV_COUNT);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border bg-surface px-2 py-2 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border/80 bg-surface/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur supports-[backdrop-filter]:bg-surface/85 md:hidden">
       {isMoreOpen && secondaryItems.length > 0 ? (
-        <div id="mobile-more-menu" className="absolute bottom-16 right-2 z-30 w-56 rounded-md border border-border bg-bg p-2 shadow-lg">
+        <div
+          id="mobile-more-menu"
+          className="absolute bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-2 z-30 w-60 rounded-xl border border-border/80 bg-bg p-2 shadow-xl"
+        >
           <ul className="space-y-1">
             {secondaryItems.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-2 rounded-md px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-                    pathname === item.href ? 'bg-surface text-text' : 'text-muted'
+                    'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                    pathname === item.href ? 'bg-accent/10 text-accent' : 'text-text hover:bg-surface'
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -75,8 +78,8 @@ export function MobileBottomNav(): JSX.Element {
             type="button"
             onClick={() => setIsMoreOpen((value) => !value)}
             className={cn(
-              'flex min-h-10 w-full flex-col items-center justify-center gap-1 rounded-md px-2 py-1 text-[11px] leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-              isMoreOpen ? 'bg-bg text-text' : 'text-muted'
+              'flex min-h-11 w-full flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-medium leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+              isMoreOpen ? 'bg-accent/10 text-accent' : 'text-muted hover:bg-surface'
             )}
             aria-expanded={isMoreOpen}
             aria-controls="mobile-more-menu"
@@ -97,8 +100,8 @@ function NavItemButton({ item, isActive }: { item: NavItem; isActive: boolean })
     <Link
       href={item.href}
       className={cn(
-        'flex min-h-10 flex-col items-center justify-center gap-1 rounded-md px-2 py-1 text-[11px] leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-        isActive ? 'bg-bg text-text' : 'text-muted'
+        'flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-medium leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+        isActive ? 'bg-accent/10 text-accent' : 'text-muted hover:bg-surface'
       )}
     >
       <Icon className="h-4 w-4" />

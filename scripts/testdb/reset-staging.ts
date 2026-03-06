@@ -3,14 +3,15 @@ import { execSync } from 'node:child_process';
 import { PrismaClient } from '@prisma/client';
 
 async function main(): Promise<void> {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = process.env.DATABASE_URL ?? process.env.STAGING_DATABASE_URL ?? process.env.E2E_DATABASE_URL;
+  const directUrl = process.env.DIRECT_URL ?? process.env.STAGING_DIRECT_URL ?? process.env.E2E_DIRECT_URL;
 
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL is required for staging reset');
+    throw new Error('DATABASE_URL is required for staging reset (or provide STAGING_DATABASE_URL / E2E_DATABASE_URL)');
   }
 
   process.env.DATABASE_URL = databaseUrl;
-  process.env.DIRECT_URL = process.env.DIRECT_URL ?? databaseUrl;
+  process.env.DIRECT_URL = directUrl ?? databaseUrl;
 
   const prisma = new PrismaClient();
 

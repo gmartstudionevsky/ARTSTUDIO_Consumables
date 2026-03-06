@@ -176,3 +176,5 @@ CI запускает линтер, typecheck, build и e2e smoke/core-flow.
 
 
 - Причины отмены операций: предзаполнены при seed defaults и настраиваются в Админ → Справочники → Причины.
+
+- E2E staging использует переменные `DATABASE_URL/DIRECT_URL/SESSION_SECRET`; также поддерживаются алиасы `STAGING_*` и `E2E_*` (подхватываются в `playwright/global-setup.ts` и `scripts/testdb/reset-staging.ts`).

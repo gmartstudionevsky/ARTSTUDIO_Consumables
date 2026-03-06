@@ -11,6 +11,7 @@ type Job = {
   sourceFilename: string;
   error: string | null;
   canRollback?: boolean;
+  rollbackHint?: string | null;
   rolledBackAt?: string | null;
 };
 
@@ -42,17 +43,18 @@ export function ImportJobsList({ jobs, onRollback, rollingBackJobId }: { jobs: J
               <p className="text-xs text-muted">{new Date(job.createdAt).toLocaleString('ru-RU')}</p>
               {job.rolledBackAt ? <p className="mt-1 text-xs text-muted">Откат: {new Date(job.rolledBackAt).toLocaleString('ru-RU')}</p> : null}
               {job.error ? <p className="mt-1 text-xs text-critical">{job.error}</p> : null}
-              {onRollback && job.status === 'COMMITTED' && job.canRollback && !job.rolledBackAt ? (
+              {onRollback && job.status === 'COMMITTED' ? (
                 <div className="mt-2">
                   <Button
                     size="sm"
                     variant="secondary"
                     onClick={() => onRollback(job.id)}
                     loading={rollingBackJobId === job.id}
-                    disabled={Boolean(rollingBackJobId)}
+                    disabled={Boolean(rollingBackJobId) || !job.canRollback || Boolean(job.rolledBackAt)}
                   >
-                    Откатить импорт
+                    {job.rolledBackAt ? 'Импорт уже откачен' : 'Откатить импорт'}
                   </Button>
+                  {!job.canRollback && !job.rolledBackAt ? <p className="mt-1 text-xs text-muted">{job.rollbackHint ?? 'Откат для этого импорта недоступен.'}</p> : null}
                 </div>
               ) : null}
             </div>

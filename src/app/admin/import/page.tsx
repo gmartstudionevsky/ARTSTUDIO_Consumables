@@ -11,7 +11,18 @@ import { Button } from '@/components/ui/Button';
 import { Toast } from '@/components/ui/Toast';
 import { ImportIssue, ImportSummary as Summary } from '@/lib/import/types';
 
-type JobsResponse = { items: Array<{ id: string; createdAt: string; status: 'DRAFT' | 'COMMITTED' | 'FAILED'; sourceFilename: string; error: string | null; canRollback?: boolean; rolledBackAt?: string | null }> };
+type JobsResponse = {
+  items: Array<{
+    id: string;
+    createdAt: string;
+    status: 'DRAFT' | 'COMMITTED' | 'FAILED';
+    sourceFilename: string;
+    error: string | null;
+    canRollback?: boolean;
+    rollbackHint?: string | null;
+    rolledBackAt?: string | null;
+  }>;
+};
 
 export default function AdminImportPage(): JSX.Element {
   const [file, setFile] = useState<File | null>(null);
@@ -110,6 +121,10 @@ export default function AdminImportPage(): JSX.Element {
       {summary ? (
         <section className="space-y-4">
           <ImportSummary summary={summary} />
+          <p className="text-sm text-muted">
+            При импорте создаются/обновляются номенклатурные позиции вместе с единицами измерения.
+            Коды для новых позиций генерируются автоматически с нуля по внутренней последовательности.
+          </p>
           <label className="flex items-center gap-2 text-sm text-text">
             <input type="checkbox" checked={createOpening} onChange={(event) => setCreateOpening(event.target.checked)} />
             Создать открытие склада 01.03.2026

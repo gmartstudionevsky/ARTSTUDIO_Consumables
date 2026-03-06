@@ -36,14 +36,21 @@ export async function GET(request: Request): Promise<NextResponse> {
   return NextResponse.json({
     items: items.map((job) => {
       const payload = job.payload as { rollback?: { rolledBackAt?: string } } | null;
+      const rolledBackAt = payload?.rollback?.rolledBackAt ?? null;
+      const canRollback = Boolean(payload?.rollback);
+      const rollbackHint = !canRollback && job.status === 'COMMITTED'
+        ? 'Откат доступен только для импортов, выполненных после включения rollback-метаданных.'
+        : null;
+
       return {
         id: job.id,
         createdAt: job.createdAt,
         status: job.status,
         sourceFilename: job.sourceFilename,
         error: job.error,
-        canRollback: Boolean(payload?.rollback),
-        rolledBackAt: payload?.rollback?.rolledBackAt ?? null,
+        canRollback,
+        rollbackHint,
+        rolledBackAt,
       };
     }),
     total,

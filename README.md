@@ -20,6 +20,7 @@ npm run dev
 ### Обязательные
 
 - `DATABASE_URL` — подключение к PostgreSQL.
+- `DIRECT_URL` — direct URL для Prisma migrate/seed (если не задан, npm-скрипты используют `DATABASE_URL`).
 - `SESSION_SECRET` — секрет подписи сессии.
 - `NEXT_PUBLIC_APP_URL` — публичный базовый URL приложения.
 

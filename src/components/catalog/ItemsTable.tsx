@@ -16,13 +16,13 @@ export function ItemsTable({ items, canManage, onToggle }: ItemsTableProps): JSX
       <table className="min-w-full text-sm">
         <thead className="bg-surface text-left text-muted">
           <tr>
-            <th className="px-3 py-2">Код / Название</th><th className="px-3 py-2">Раздел</th><th className="px-3 py-2">Статья</th><th className="px-3 py-2">Назначение</th><th className="px-3 py-2">Статус</th><th className="px-3 py-2">Действия</th>
+            <th className="px-3 py-2">Название</th><th className="px-3 py-2">Раздел</th><th className="px-3 py-2">Статья</th><th className="px-3 py-2">Назначение</th><th className="px-3 py-2">Статус</th><th className="px-3 py-2">Действия</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
             <tr key={item.id} className="border-t border-border">
-              <td className="px-3 py-2"><p className="font-medium">{item.code}</p><p>{item.name}</p></td>
+              <td className="px-3 py-2"><p className="font-medium">{canManage ? `${item.code} — ${item.name}` : item.name}</p></td>
               <td className="px-3 py-2">{item.category.name}</td>
               <td className="px-3 py-2">{item.defaultExpenseArticle.code} — {item.defaultExpenseArticle.name}</td>
               <td className="px-3 py-2">{item.defaultPurpose.code} — {item.defaultPurpose.name}</td>

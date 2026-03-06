@@ -18,20 +18,20 @@ type FiltersState = {
   q: string;
   itemId: string;
   expenseArticleId: string;
-  purposeId: string;
+  categoryId: string;
 };
 
 const limit = 30;
 
 export function HistoryPageClient(): JSX.Element {
-  const [filters, setFilters] = useState<FiltersState>({ from: '', to: '', type: 'all', status: 'all', q: '', itemId: '', expenseArticleId: '', purposeId: '' });
+  const [filters, setFilters] = useState<FiltersState>({ from: '', to: '', type: 'all', status: 'all', q: '', itemId: '', expenseArticleId: '', categoryId: '' });
   const [debouncedQ, setDebouncedQ] = useState('');
   const [items, setItems] = useState<HistoryListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [itemOptions, setItemOptions] = useState<Array<{ id: string; code: string; name: string }>>([]);
   const [expenseArticles, setExpenseArticles] = useState<RefOption[]>([]);
-  const [purposes, setPurposes] = useState<RefOption[]>([]);
+  const [categories, setCategories] = useState<RefOption[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -40,9 +40,9 @@ export function HistoryPageClient(): JSX.Element {
   }, [filters.q]);
 
   useEffect(() => {
-    void Promise.all([fetchLookup('expense-articles'), fetchLookup('purposes'), searchItems('')]).then(([articleRows, purposeRows, itemRows]) => {
+    void Promise.all([fetchLookup('expense-articles'), fetchLookup('categories'), searchItems('')]).then(([articleRows, categoryRows, itemRows]) => {
       setExpenseArticles(articleRows);
-      setPurposes(purposeRows);
+      setCategories(categoryRows);
       setItemOptions(itemRows);
     });
   }, []);
@@ -59,7 +59,7 @@ export function HistoryPageClient(): JSX.Element {
       q: debouncedQ,
       itemId: filters.itemId,
       expenseArticleId: filters.expenseArticleId,
-      purposeId: filters.purposeId,
+      categoryId: filters.categoryId,
       limit,
       offset,
     }).then((payload) => {
@@ -67,7 +67,7 @@ export function HistoryPageClient(): JSX.Element {
       setTotal(payload.total);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [filters.type, filters.status, filters.itemId, filters.expenseArticleId, filters.purposeId, filters.from, filters.to, debouncedQ, offset]);
+  }, [filters.type, filters.status, filters.itemId, filters.expenseArticleId, filters.categoryId, filters.from, filters.to, debouncedQ, offset]);
 
   const fromTo = useMemo(() => {
     const from = total === 0 ? 0 : offset + 1;
@@ -102,7 +102,7 @@ export function HistoryPageClient(): JSX.Element {
         onPreset={applyPreset}
         items={itemOptions}
         expenseArticles={expenseArticles}
-        purposes={purposes}
+        categories={categories}
       />
 
       {loading ? <p className="text-sm text-muted">Загрузка операций...</p> : null}

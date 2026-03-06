@@ -16,7 +16,7 @@ export function CatalogPageClient({ categories, expenseArticles, purposes, units
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState('');
-  const [filters, setFilters] = useState({ q: '', categoryId: '', expenseArticleId: '', purposeId: '', active: 'true' as 'true' | 'false' | 'all' });
+  const [filters, setFilters] = useState({ q: '', categoryId: '', expenseArticleId: '', active: 'true' as 'true' | 'false' | 'all' });
   const [items, setItems] = useState<CatalogItem[]>([]);
 
   const load = useCallback(async () => {
@@ -44,7 +44,7 @@ export function CatalogPageClient({ categories, expenseArticles, purposes, units
         <p className="text-sm text-muted">Позиции, единицы учёта и привязки к статьям/назначениям.</p>
       </header>
 
-      <CatalogFilters {...filters} categories={categories} expenseArticles={expenseArticles} purposes={purposes} onChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))} />
+      <CatalogFilters {...filters} categories={categories} expenseArticles={expenseArticles} onChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))} />
       <ItemHeaderActions canManage={canManage} onOpenCreate={() => setOpen(true)} />
 
       {items.length === 0 ? <EmptyState title="Список пуст" description="Создайте первую позицию номенклатуры." /> : null}

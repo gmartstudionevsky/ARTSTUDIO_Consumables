@@ -10,7 +10,6 @@ interface StockFiltersValue {
   q: string;
   categoryId: string;
   expenseArticleId: string;
-  purposeId: string;
   status: StockStatusFilter;
   active: ActiveFilter;
 }
@@ -19,14 +18,13 @@ interface StockFiltersProps {
   value: StockFiltersValue;
   categories: RefOption[];
   expenseArticles: RefOption[];
-  purposes: RefOption[];
   onChange: (value: StockFiltersValue) => void;
 }
 
-export function StockFilters({ value, categories, expenseArticles, purposes, onChange }: StockFiltersProps): JSX.Element {
+export function StockFilters({ value, categories, expenseArticles, onChange }: StockFiltersProps): JSX.Element {
   return (
     <div className="grid gap-3 rounded-lg border border-border bg-surface p-4 md:grid-cols-2 xl:grid-cols-3">
-      <Input label="Поиск" placeholder="Код, название или синоним" data-testid="stock-search" value={value.q} onChange={(event) => onChange({ ...value, q: event.target.value })} />
+      <Input label="Поиск" placeholder="Название или синоним" data-testid="stock-search" value={value.q} onChange={(event) => onChange({ ...value, q: event.target.value })} />
       <Select label="Раздел" value={value.categoryId} onChange={(event) => onChange({ ...value, categoryId: event.target.value })}>
         <option value="">Все</option>
         {categories.map((item) => (
@@ -36,12 +34,6 @@ export function StockFilters({ value, categories, expenseArticles, purposes, onC
       <Select label="Статья расходов" value={value.expenseArticleId} onChange={(event) => onChange({ ...value, expenseArticleId: event.target.value })}>
         <option value="">Все</option>
         {expenseArticles.map((item) => (
-          <option key={item.id} value={item.id}>{item.code} — {item.name}</option>
-        ))}
-      </Select>
-      <Select label="Назначение" value={value.purposeId} onChange={(event) => onChange({ ...value, purposeId: event.target.value })}>
-        <option value="">Все</option>
-        {purposes.map((item) => (
           <option key={item.id} value={item.id}>{item.code} — {item.name}</option>
         ))}
       </Select>

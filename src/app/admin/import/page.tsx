@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Toast } from '@/components/ui/Toast';
 import { ImportIssue, ImportSummary as Summary } from '@/lib/import/types';
 
-type JobsResponse = { items: Array<{ id: string; createdAt: string; status: 'DRAFT' | 'COMMITTED' | 'FAILED'; sourceFilename: string; error: string | null }> };
+type JobsResponse = { items: Array<{ id: string; createdAt: string; status: 'DRAFT' | 'COMMITTED' | 'FAILED'; sourceFilename: string; error: string | null; canRollback?: boolean; rolledBackAt?: string | null }> };
 
 export default function AdminImportPage(): JSX.Element {
   const [file, setFile] = useState<File | null>(null);
@@ -24,6 +24,7 @@ export default function AdminImportPage(): JSX.Element {
   const [createOpening, setCreateOpening] = useState(true);
   const [toast, setToast] = useState('');
   const [jobs, setJobs] = useState<JobsResponse['items']>([]);
+  const [rollingBackJobId, setRollingBackJobId] = useState<string | null>(null);
 
   async function loadJobs(): Promise<void> {
     const response = await fetch('/api/admin/import/jobs?limit=10&offset=0', { cache: 'no-store' });
@@ -54,6 +55,27 @@ export default function AdminImportPage(): JSX.Element {
     setSummary(json.summary);
     setErrors(json.errors);
     setWarnings(json.warnings);
+    await loadJobs();
+  }
+
+
+
+  async function handleRollback(jobIdToRollback: string): Promise<void> {
+    setRollingBackJobId(jobIdToRollback);
+    const response = await fetch('/api/admin/import/xlsx/rollback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId: jobIdToRollback }),
+    });
+    const json = (await response.json().catch(() => null)) as { error?: string } | null;
+    setRollingBackJobId(null);
+
+    if (!response.ok) {
+      setToast(json?.error ?? 'Ошибка отката импорта');
+      return;
+    }
+
+    setToast('Импорт откачен');
     await loadJobs();
   }
 
@@ -101,7 +123,7 @@ export default function AdminImportPage(): JSX.Element {
         </section>
       ) : null}
 
-      <ImportJobsList jobs={jobs} />
+      <ImportJobsList jobs={jobs} onRollback={handleRollback} rollingBackJobId={rollingBackJobId} />
       {toast ? <Toast message={toast} onClose={() => setToast('')} /> : null}
     </main>
   );

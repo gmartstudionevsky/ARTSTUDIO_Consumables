@@ -7,7 +7,12 @@ import { commitImportJob } from '@/lib/import/commit';
 
 const schema = z.object({
   jobId: z.string().uuid(),
-  options: z.object({ createOpening: z.boolean().optional() }).optional(),
+  options: z.object({
+    createOpening: z.boolean().optional(),
+    syncMode: z.enum(['AUTO', 'MANUAL']).optional(),
+    unresolvedBehavior: z.enum(['CREATE', 'SKIP']).optional(),
+    decisions: z.array(z.object({ rowNumber: z.number().int(), action: z.enum(['AUTO', 'CREATE', 'SKIP']), itemId: z.string().uuid().optional() })).optional(),
+  }).optional(),
 });
 
 async function requireAdmin(): Promise<{ id: string } | NextResponse> {

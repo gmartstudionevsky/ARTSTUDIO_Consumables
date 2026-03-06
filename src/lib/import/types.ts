@@ -39,6 +39,39 @@ export type ImportSummary = {
   purposes: number;
   itemUnits: number;
   openingLines: number;
+  syncMatched: number;
+  syncCreated: number;
+  syncSkipped: number;
+  syncNeedsReview: number;
+};
+
+export type ImportSyncCandidate = {
+  itemId: string;
+  code: string;
+  name: string;
+  category: string;
+  score: number;
+  reason: string;
+};
+
+export type ImportSyncAction = 'AUTO' | 'CREATE' | 'SKIP';
+
+export type ImportSyncPlanRow = {
+  rowNumber: number;
+  sourceCode: string;
+  sourceName: string;
+  sourceCategory: string;
+  sourceKey: string;
+  status: 'MATCHED' | 'CREATE' | 'SKIP' | 'NEEDS_REVIEW';
+  selectedItemId: string | null;
+  selectedReason: string | null;
+  candidates: ImportSyncCandidate[];
+  missingRequired: string[];
+};
+
+export type ImportSyncPlan = {
+  mode: 'AUTO' | 'MANUAL';
+  rows: ImportSyncPlanRow[];
 };
 
 export type NormalizedImportPayload = {
@@ -49,9 +82,12 @@ export type NormalizedImportPayload = {
     directory: DirectoryRow[];
     units: UnitRow[];
   };
+  syncPlan: ImportSyncPlan;
 };
 
 export type CommitOptions = {
   createOpening?: boolean;
+  syncMode?: 'AUTO' | 'MANUAL';
+  unresolvedBehavior?: 'CREATE' | 'SKIP';
+  decisions?: Array<{ rowNumber: number; action: ImportSyncAction; itemId?: string }>;
 };
-

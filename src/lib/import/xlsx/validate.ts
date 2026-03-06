@@ -1,11 +1,110 @@
-import { NormalizedImportPayload, ImportIssue } from '@/lib/import/types';
+import { Item } from '@prisma/client';
+
+import { ImportSyncPlanRow, NormalizedImportPayload, ImportIssue } from '@/lib/import/types';
 import { ParsedImportResult } from '@/lib/import/xlsx/parse';
 
 function pushError(list: ImportIssue[], sheet: string, row: number, column: string, message: string): void {
   list.push({ sheet, row, column, message });
 }
 
-export function validateImportData(parsed: ParsedImportResult): NormalizedImportPayload {
+function normalize(value: string | null | undefined): string {
+  return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function parseSynonyms(value: string | null | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(/[,;|]/)
+    .map((part) => normalize(part))
+    .filter(Boolean);
+}
+
+function pickSyncRows(parsed: ParsedImportResult, existingItems: Array<Pick<Item, 'id' | 'code' | 'name' | 'synonyms' | 'categoryId'> & { category: { name: string } }>): ImportSyncPlanRow[] {
+  const rows: ImportSyncPlanRow[] = [];
+
+  for (const row of parsed.directoryRows) {
+    const rowCode = normalize(row.code);
+    const rowName = normalize(row.name);
+    const rowCategory = normalize(row.category);
+    const rowAliases = new Set([rowName, ...parseSynonyms(row.synonyms)]);
+
+    const candidates = existingItems
+      .map((item) => {
+        const itemCode = normalize(item.code);
+        const itemName = normalize(item.name);
+        const itemCategory = normalize(item.category.name);
+        const itemAliases = new Set([itemName, ...parseSynonyms(item.synonyms)]);
+
+        const codeExact = rowCode && rowCode === itemCode;
+        const nameExact = rowName && rowName === itemName;
+        const nameAlias = [...rowAliases].some((alias) => itemAliases.has(alias));
+        const categoryExact = rowCategory && rowCategory === itemCategory;
+
+        let score = 0;
+        const reasons: string[] = [];
+
+        if (codeExact) {
+          score += 100;
+          reasons.push('Совпал код');
+        }
+        if (nameExact) {
+          score += 60;
+          reasons.push('Совпало название');
+        } else if (nameAlias) {
+          score += 40;
+          reasons.push('Совпал синоним');
+        }
+        if (categoryExact) {
+          score += 20;
+          reasons.push('Совпал раздел');
+        }
+
+        return {
+          itemId: item.id,
+          code: item.code,
+          name: item.name,
+          category: item.category.name,
+          score,
+          reason: reasons.join(', ') || 'Нет явных совпадений',
+        };
+      })
+      .filter((candidate) => candidate.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+
+    const missingRequired: string[] = [];
+    if (!row.name) missingRequired.push('Номенклатура');
+    if (!row.category) missingRequired.push('Раздел');
+    if (!row.baseUnit) missingRequired.push('Ед. базовая');
+    if (!row.defaultInputUnit) missingRequired.push('Ед. учёта (по умолчанию)');
+    if (!row.reportUnit) missingRequired.push('Ед. отчёта (по умолчанию)');
+    if (!row.purposeCode) missingRequired.push('Назначение');
+
+    const best = candidates[0];
+    const autoMatched = Boolean(best && best.score >= 120);
+    const needsReview = !autoMatched && candidates.length > 0;
+
+    rows.push({
+      rowNumber: row.rowNumber,
+      sourceCode: row.code,
+      sourceName: row.name,
+      sourceCategory: row.category,
+      sourceKey: normalize(`${row.code}::${row.name}::${row.category}`),
+      status: autoMatched ? 'MATCHED' : needsReview ? 'NEEDS_REVIEW' : 'CREATE',
+      selectedItemId: autoMatched ? best.itemId : null,
+      selectedReason: autoMatched ? `Автосопоставление: ${best.reason}` : null,
+      candidates,
+      missingRequired,
+    });
+  }
+
+  return rows;
+}
+
+export function validateImportData(
+  parsed: ParsedImportResult,
+  existingItems: Array<Pick<Item, 'id' | 'code' | 'name' | 'synonyms' | 'categoryId'> & { category: { name: string } }> = []
+): NormalizedImportPayload {
   const errors: ImportIssue[] = [...parsed.parseErrors];
   const warnings: ImportIssue[] = [];
 
@@ -87,6 +186,7 @@ export function validateImportData(parsed: ParsedImportResult): NormalizedImport
   }
 
   const openingLines = parsed.directoryRows.filter((row) => row.openingQty > 0).length;
+  const syncRows = pickSyncRows(parsed, existingItems);
 
   return {
     summary: {
@@ -97,6 +197,10 @@ export function validateImportData(parsed: ParsedImportResult): NormalizedImport
       purposes: purposeSet.size,
       itemUnits: parsed.unitRows.length,
       openingLines,
+      syncMatched: syncRows.filter((row) => row.status === 'MATCHED').length,
+      syncCreated: syncRows.filter((row) => row.status === 'CREATE').length,
+      syncSkipped: syncRows.filter((row) => row.status === 'SKIP').length,
+      syncNeedsReview: syncRows.filter((row) => row.status === 'NEEDS_REVIEW').length,
     },
     errors,
     warnings,
@@ -104,6 +208,9 @@ export function validateImportData(parsed: ParsedImportResult): NormalizedImport
       directory: parsed.directoryRows,
       units: parsed.unitRows,
     },
+    syncPlan: {
+      mode: 'AUTO',
+      rows: syncRows,
+    },
   };
 }
-

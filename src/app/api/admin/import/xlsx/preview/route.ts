@@ -25,7 +25,17 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const arrayBuffer = await file.arrayBuffer();
   const parsed = await parseImportWorkbook(arrayBuffer);
-  const payload = validateImportData(parsed);
+  const existingItems = await prisma.item.findMany({
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      synonyms: true,
+      categoryId: true,
+      category: { select: { name: true } },
+    },
+  });
+  const payload = validateImportData(parsed, existingItems);
 
   const job = await prisma.importJob.create({
     data: {
@@ -42,5 +52,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     summary: payload.summary,
     errors: payload.errors,
     warnings: payload.warnings,
+    syncRows: payload.syncPlan.rows,
   });
 }

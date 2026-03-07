@@ -22,6 +22,19 @@ function nowText(): string {
   return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+export function normalizeTxResult(result: TxResult): TxResult {
+  return {
+    ...result,
+    lines: result.lines.map((line) => ({
+      ...line,
+      item: line.item ?? { id: '', code: '—', name: 'Неизвестная позиция' },
+      unit: line.unit ?? { id: '', name: '—' },
+      expenseArticle: line.expenseArticle ?? { id: '', code: '—', name: '—' },
+      purpose: line.purpose ?? { id: '', code: '—', name: '—' },
+    })),
+  };
+}
+
 export function OperationForm(): JSX.Element {
   const [type, setType] = useState<OperationType>('IN');
   const [intakeMode, setIntakeMode] = useState<IntakeMode>('SINGLE_PURPOSE');
@@ -127,7 +140,7 @@ export function OperationForm(): JSX.Element {
           distributions: line.distributions?.map((entry) => ({ purposeId: entry.purposeId, qtyInput: entry.qtyInput })),
         })),
       };
-      const created = await createTransaction(payload);
+      const created = normalizeTxResult(await createTransaction(payload));
       setResult(created);
       setWarnings((created.warnings ?? []).map((w) => ({ message: w.message, itemName: w.itemName })));
       setToast('Операция записана');

@@ -44,6 +44,7 @@ export const createItemSchema = z.object({
     unitId: z.string().uuid().optional(),
     occurredAt: nullableOptionalText,
     comment: nullableOptionalText,
+    mode: z.enum(['IN', 'OPENING']).optional().default('IN'),
   }).optional(),
 }).superRefine((data, ctx) => {
   if (!data.initialStock?.enabled) return;

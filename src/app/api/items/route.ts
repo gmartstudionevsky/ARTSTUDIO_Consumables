@@ -15,8 +15,8 @@ function isUniqueCodeError(error: unknown): boolean {
 
 const accountingPositionWriteService = createAccountingPositionWriteService();
 
-function toHttpStatus(kind: 'validation' | 'invariant' | 'not_found' | 'conflict' | 'unexpected'): number {
-  if (kind === 'validation' || kind === 'invariant') return 400;
+function toHttpStatus(kind: 'validation' | 'invariant' | 'domain_semantic' | 'not_found' | 'conflict' | 'unexpected'): number {
+  if (kind === 'validation' || kind === 'invariant' || kind === 'domain_semantic') return 400;
   if (kind === 'not_found') return 404;
   if (kind === 'conflict') return 409;
   return 500;

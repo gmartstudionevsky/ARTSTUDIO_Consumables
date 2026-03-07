@@ -135,3 +135,37 @@
   - Legacy API и persistence (`Item`, `/api/items`) сознательно сохранены для compatibility-first модели; изменён только слой исполнения write-flow.
 - **Следующий шаг:**
   - R3.2: расширить application write-side на класс «учётные события» (движения/OPENING/INVENTORY_APPLY) и формализовать pipeline перестроения read-model.
+
+
+### 2026-03-07 / R3.2
+
+- Статус: done.
+- Что сделано:
+  - Добавлен канонический application/use-case слой событий учёта: `src/lib/application/accounting-event/*` с явными командами/результатами для `createMovement`, `createOpening`, `applyInventoryResult`.
+  - Зафиксирована явная семантика `IN/OUT/ADJUST` (обычные движения), `OPENING` (отдельный сценарий), `INVENTORY_APPLY` (отдельный сценарий с `interpretationMode`).
+  - Переведены живые маршруты на новый слой: `POST /api/transactions` и `POST /api/inventory/[id]/apply`; route handlers теперь адаптеры command/result.
+  - В result-контракты добавлены projection/recovery поля (`projection`, `recovery`) как минимальный выход в R3.3/R3.4 (read-model/recovery волны).
+  - В events write-flow встроено использование инвариантов и availability/compatibility mapping через проверку канонической позиции.
+  - Добавлены тесты нового application слоя: `tests/application/accounting-event.write-flow.test.ts`.
+- Что осталось на следующую волну:
+  - Полная материализация read-model движка/проекций и фоновая оркестрация.
+  - Полный recovery toolkit (rollback/reset/re-sync операции).
+  - Явный UI-переключатель режима `interpretationMode` для inventory apply (контракт уже заложен).
+
+
+### 2026-03-08 / R3.2 correction (core-flow e2e regression)
+
+- Статус: fix applied, R3.2 changeset повторно готов к PR-прогону.
+- Root cause:
+  - после перевода `POST /api/transactions` на новый application-layer route начал возвращать `lines` в каноническом (плоском) формате use-case результата;
+  - экран «Операция» (`ResultView`) ожидал legacy view-model с вложенными `line.item/unit/expenseArticle/purpose`;
+  - в success-path после `op-save` происходил client-side exception, из-за чего `op-result` не монтировался (и падал `core-flow` e2e).
+- Что исправлено:
+  - route-adapter `/api/transactions` восстановлен как bridge-контракт: после `createMovement` дополнительно читает `TransactionLine` с include и возвращает UI-совместимый `lines` shape;
+  - в `OperationForm` добавлен защитный normalizer post-action результата, чтобы неполный line-payload не приводил к client crash.
+- Regression shield:
+  - добавлен unit-test `tests/components/operation.result-contract.test.ts` на защиту post-action result contract.
+- Локальная воспроизводимость в Codex:
+  - установлен Chromium и system deps: `npx playwright install --with-deps chromium`;
+  - поднят локальный PostgreSQL (без docker), применены миграции и `seed:test:e2e`;
+  - подтверждён зелёный прогон failing spec `tests/e2e/core-flow.spec.ts`.

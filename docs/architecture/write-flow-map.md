@@ -86,3 +86,19 @@
 - `POST /api/items/[id]/toggle-active`.
 
 Route handlers в touched area теперь выполняют только приём/парсинг запроса, вызов use-case и возврат HTTP-ответа; каноническая write-логика вынесена в application-слой.
+
+
+## 7. Кодовая привязка R3.2 (событийный write-side ядра учёта)
+
+R3.2 переводит учётные события в реальный application/use-case слой:
+
+- `src/lib/application/accounting-event/contracts.ts` — command/result контракты для movement/opening/inventory apply, включая `interpretationMode`, projection/recovery outcome.
+- `src/lib/application/accounting-event/service.ts` — каноническая реализация write-flow шаблона для событийных сценариев.
+- `src/app/api/transactions/route.ts` — адаптер к `createMovement` (без предметной семантики в route).
+- `src/app/api/inventory/[id]/apply/route.ts` — адаптер к `applyInventoryResult` (разделение `OPENING` и `INVENTORY_APPLY` сохраняется внутри use-case).
+
+Семантические границы:
+
+- `createMovement` принимает только `IN|OUT|ADJUST` и блокирует попытку провести `OPENING` как обычное движение.
+- `createOpening` формирует отдельный класс события `OPENING`.
+- `applyInventoryResult` формирует `INVENTORY_APPLY` (или `OPENING` для opening-сессии) и несёт явный `interpretationMode`.

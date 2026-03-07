@@ -162,9 +162,10 @@ export function createAccountingPositionWriteService(
             const qtyInput = toDecimal(command.initialStock.qty);
             const qtyBase = toDecimal(new Prisma.Decimal(command.initialStock.qty).mul(itemUnit.factorToBase).toNumber());
 
+            const txType = command.initialStock.mode === 'OPENING' ? TxType.OPENING : TxType.IN;
             const txData: Prisma.TransactionCreateInput = {
               batchId: makeBatchId(),
-              type: TxType.IN,
+              type: txType,
               occurredAt,
               note: command.initialStock.comment ?? 'Первичное поступление при создании позиции',
               status: RecordStatus.ACTIVE,
@@ -194,7 +195,7 @@ export function createAccountingPositionWriteService(
                   action: 'CREATE_TX',
                   entity: 'Transaction',
                   entityId: createdTx.id,
-                  payload: { type: TxType.IN, source: 'ITEM_CREATE', itemId: created.id, scenario: CREATE_SCENARIO },
+                  payload: { type: txType, source: 'ITEM_CREATE', itemId: created.id, scenario: CREATE_SCENARIO, stockMode: command.initialStock.mode ?? 'IN' },
                 },
               });
             }

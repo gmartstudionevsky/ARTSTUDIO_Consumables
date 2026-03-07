@@ -2,11 +2,11 @@
 
 `src/lib/application/*` содержит канонические write-flow (use-case) и их контракты.
 
-Планируемая структура классов write-flow:
+Текущая структура классов write-flow:
 
-- `accounting-position/*` — **формирование/изменение сущностей** (реализовано на R3.1).
-- `movement-events/*` — **учётные события** (следующий шаг R3.x/R4).
-- `sync-scenarios/*` — **синхронизационные сценарии** (импорт/re-sync).
+- `accounting-position/*` — **формирование/изменение сущностей** (R3.1).
+- `accounting-event/*` — **учётные события** (R3.2: movement/opening/inventory apply).
+- `sync-scenarios/*` — **синхронизационные сценарии** (импорт/re-sync, следующая волна).
 - `control-plane/*` — **управляющие сценарии**.
 
 Route handlers должны быть адаптерами и вызывать use-case слой, а не хранить предметную логику.

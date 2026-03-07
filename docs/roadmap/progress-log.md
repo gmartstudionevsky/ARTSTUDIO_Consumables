@@ -135,3 +135,19 @@
   - Legacy API и persistence (`Item`, `/api/items`) сознательно сохранены для compatibility-first модели; изменён только слой исполнения write-flow.
 - **Следующий шаг:**
   - R3.2: расширить application write-side на класс «учётные события» (движения/OPENING/INVENTORY_APPLY) и формализовать pipeline перестроения read-model.
+
+
+### 2026-03-07 / R3.2
+
+- Статус: done.
+- Что сделано:
+  - Добавлен канонический application/use-case слой событий учёта: `src/lib/application/accounting-event/*` с явными командами/результатами для `createMovement`, `createOpening`, `applyInventoryResult`.
+  - Зафиксирована явная семантика `IN/OUT/ADJUST` (обычные движения), `OPENING` (отдельный сценарий), `INVENTORY_APPLY` (отдельный сценарий с `interpretationMode`).
+  - Переведены живые маршруты на новый слой: `POST /api/transactions` и `POST /api/inventory/[id]/apply`; route handlers теперь адаптеры command/result.
+  - В result-контракты добавлены projection/recovery поля (`projection`, `recovery`) как минимальный выход в R3.3/R3.4 (read-model/recovery волны).
+  - В events write-flow встроено использование инвариантов и availability/compatibility mapping через проверку канонической позиции.
+  - Добавлены тесты нового application слоя: `tests/application/accounting-event.write-flow.test.ts`.
+- Что осталось на следующую волну:
+  - Полная материализация read-model движка/проекций и фоновая оркестрация.
+  - Полный recovery toolkit (rollback/reset/re-sync операции).
+  - Явный UI-переключатель режима `interpretationMode` для inventory apply (контракт уже заложен).

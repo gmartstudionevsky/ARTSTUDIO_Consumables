@@ -8,6 +8,7 @@ export interface CreateAccountingPositionCommand extends ItemLegacyWriteDraft {
     unitId?: string;
     occurredAt?: string | null;
     comment?: string | null;
+    mode?: 'IN' | 'OPENING';
   };
   context?: WriteFlowContext;
 }

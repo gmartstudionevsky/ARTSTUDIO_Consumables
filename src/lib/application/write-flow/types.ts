@@ -1,4 +1,4 @@
-export type WriteFlowFailureKind = 'validation' | 'invariant' | 'not_found' | 'conflict' | 'unexpected';
+export type WriteFlowFailureKind = 'validation' | 'invariant' | 'domain_semantic' | 'not_found' | 'conflict' | 'unexpected';
 
 export interface WriteFlowContext {
   actorId?: string;

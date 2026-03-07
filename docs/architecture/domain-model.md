@@ -230,3 +230,12 @@
 4. **Control plane:** расширение конфигурационных механизмов без разрушения рабочего контура.
 
 Недопустимо: переносить бизнес-истину в UI, импорт или отчёты; создавать «параллельные» источники учёта; модифицировать проекции в обход канонического commit.
+
+
+## 5. Обновление R3.2: событийный application-layer
+
+На этапе R3.2 событийная часть ядра (`Transaction`/`TransactionLine` и apply inventory) переведена в отдельный application/use-case слой `src/lib/application/accounting-event/*`.
+
+- Семантика `OPENING` и `INVENTORY_APPLY` закреплена отдельными сценариями, а не выводится из знака количества.
+- Обычные движения (`IN/OUT/ADJUST`) живут в отдельном use-case контракте `createMovement`.
+- Результат write-flow содержит формальный projection/recovery outcome, чтобы read-model и recovery контуры подключались без переписывания write-side.

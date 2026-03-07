@@ -151,3 +151,21 @@
   - Полная материализация read-model движка/проекций и фоновая оркестрация.
   - Полный recovery toolkit (rollback/reset/re-sync операции).
   - Явный UI-переключатель режима `interpretationMode` для inventory apply (контракт уже заложен).
+
+
+### 2026-03-08 / R3.2 correction (core-flow e2e regression)
+
+- Статус: fix applied, R3.2 changeset повторно готов к PR-прогону.
+- Root cause:
+  - после перевода `POST /api/transactions` на новый application-layer route начал возвращать `lines` в каноническом (плоском) формате use-case результата;
+  - экран «Операция» (`ResultView`) ожидал legacy view-model с вложенными `line.item/unit/expenseArticle/purpose`;
+  - в success-path после `op-save` происходил client-side exception, из-за чего `op-result` не монтировался (и падал `core-flow` e2e).
+- Что исправлено:
+  - route-adapter `/api/transactions` восстановлен как bridge-контракт: после `createMovement` дополнительно читает `TransactionLine` с include и возвращает UI-совместимый `lines` shape;
+  - в `OperationForm` добавлен защитный normalizer post-action результата, чтобы неполный line-payload не приводил к client crash.
+- Regression shield:
+  - добавлен unit-test `tests/components/operation.result-contract.test.ts` на защиту post-action result contract.
+- Локальная воспроизводимость в Codex:
+  - установлен Chromium и system deps: `npx playwright install --with-deps chromium`;
+  - поднят локальный PostgreSQL (без docker), применены миграции и `seed:test:e2e`;
+  - подтверждён зелёный прогон failing spec `tests/e2e/core-flow.spec.ts`.

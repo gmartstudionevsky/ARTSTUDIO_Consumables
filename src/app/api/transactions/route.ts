@@ -211,6 +211,17 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: txResult.message, scenario: txResult.scenario, details: txResult.details }, { status });
     }
 
+    const lines = await prisma.transactionLine.findMany({
+      where: { transactionId: txResult.data.transaction.id },
+      include: {
+        item: { select: { id: true, code: true, name: true } },
+        unit: { select: { id: true, name: true } },
+        expenseArticle: { select: { id: true, code: true, name: true } },
+        purpose: { select: { id: true, code: true, name: true } },
+      },
+      orderBy: { id: 'asc' },
+    });
+
     try {
       void sendTxCreated(txResult.data.transaction.id);
     } catch (telegramError) {
@@ -219,7 +230,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     return NextResponse.json({
       transaction: txResult.data.transaction,
-      lines: txResult.data.lines,
+      lines,
       projection: txResult.data.projection,
       recovery: txResult.data.recovery,
       ...(txResult.data.warnings?.length ? { warnings: txResult.data.warnings } : {}),
